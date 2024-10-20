@@ -22,7 +22,7 @@ def get_extraction_db_data(extraction_id: str, contexts: dict) -> Extraction:
     return result
 
 
-def read_pdf_from_uri(uri_path: str):
+def read_pdf_from_uri(uri_path: str) -> str:
     with tempfile.NamedTemporaryFile(delete=True) as temp_file:
         response = requests.get(uri_path)
         temp_file.write(response.content)
