@@ -8,11 +8,12 @@ from unstructured.partition.pdf import partition_pdf
 
 class Extraction(SQLModel, table=True):
     id: str = Field(primary_key=True)
+    site_content: str
     artifact_link: str
     raw_page_link: str
 
 
-def get_artifact_and_url_from_db(extraction_id: str, contexts: dict) -> Extraction:
+def get_extraction_db_data(extraction_id: str, contexts: dict) -> Extraction:
     db_engine = contexts["db"]
 
     with Session(db_engine) as session:
