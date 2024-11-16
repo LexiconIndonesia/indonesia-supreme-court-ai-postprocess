@@ -22,7 +22,7 @@ def get_extraction_db_data(extraction_id: str, contexts: dict) -> Extraction:
     return result
 
 
-def read_pdf_from_uri(uri_path: str) -> str:
+def read_pdf_from_uri(uri_path: str) -> tuple[dict[int, str], int]:
     with tempfile.NamedTemporaryFile(delete=True) as temp_file:
         response = requests.get(uri_path)
         temp_file.write(response.content)
@@ -30,6 +30,16 @@ def read_pdf_from_uri(uri_path: str) -> str:
 
         elements = partition_pdf(temp_file.name)
 
-    elements = [str(el) for el in elements if type(el) not in [Header, Footer]]
+    contents = {}
+    for el in elements:
+        if type(el) in [Header, Footer]:
+            continue
 
-    return "\n\n".join(elements)
+        current_page = el.metadata.page_number
+        current_content = contents.get(current_page, "")
+        current_content += "\n" + str(el)
+        contents[current_page] = current_content
+
+    max_page = current_page
+
+    return contents, max_page
