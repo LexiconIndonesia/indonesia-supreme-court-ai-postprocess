@@ -5,7 +5,7 @@ from functools import lru_cache
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 logging.basicConfig(
-    level=logging.INFO,  # Set the logging level
+    level=logging.WARNING,  # Set the logging level
     format="%(asctime)s - %(levelname)s - %(message)s",  # Set the log message format
 )
 

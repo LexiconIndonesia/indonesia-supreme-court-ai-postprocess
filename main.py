@@ -73,19 +73,20 @@ async def generate_summary(msg: Msg) -> None:
     contexts = await CONTEXTS.get_app_contexts()
 
     data = json.loads(msg.data.decode())
-    logging.info(f"processing summarization: {data}")
+    print(f"processing summarization: {data}")
 
     extraction_data = get_extraction_db_data(
         extraction_id=data["extraction_id"], db_engine=contexts.db_engine
     )
-    logging.info(f"downloading data: {extraction_data.artifact_link}")
+    print(f"downloading data: {extraction_data.artifact_link}")
     doc_content, max_page = read_pdf_from_uri(extraction_data.artifact_link)
-    summary = generate_court_decision_summary(
+    summary, translated_summary = generate_court_decision_summary(
         doc_content=doc_content, max_page=max_page
     )
 
     # TODO add english translation and save to db, optional provide HTML conversion
-    print(summary)
+
+    print(summary, translated_summary)
     await msg.ack()
 
 
@@ -110,7 +111,7 @@ async def submit_summarization_job(
             subjects=[STREAM_SUBJECTS],
         )
         ack = await js.publish(SUBJECT, payload.model_dump_json().encode())
-        logging.info(f"submitted for summarization {payload} : {ack}")
+        print(f"submitted for summarization {payload} : {ack}")
 
     except Exception as e:
         err_msg = f"error processing summarization: {e}; RECEIVED DATA: {payload}"
