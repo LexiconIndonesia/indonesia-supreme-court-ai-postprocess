@@ -1,6 +1,7 @@
 import tempfile
 
 import requests
+from sqlalchemy.engine.base import Engine
 from sqlmodel import Field, Session, SQLModel
 from unstructured.documents.elements import Footer, Header
 from unstructured.partition.pdf import partition_pdf
@@ -13,9 +14,7 @@ class Extraction(SQLModel, table=True):
     raw_page_link: str
 
 
-def get_extraction_db_data(extraction_id: str, contexts: dict) -> Extraction:
-    db_engine = contexts["db"]
-
+def get_extraction_db_data(extraction_id: str, db_engine: Engine) -> Extraction:
     with Session(db_engine) as session:
         result = session.get(Extraction, extraction_id)
 

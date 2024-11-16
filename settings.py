@@ -1,7 +1,13 @@
+import logging
 import urllib.parse
 from functools import lru_cache
 
 from pydantic_settings import BaseSettings, SettingsConfigDict
+
+logging.basicConfig(
+    level=logging.INFO,  # Set the logging level
+    format="%(asctime)s - %(levelname)s - %(message)s",  # Set the log message format
+)
 
 
 class Settings(BaseSettings):
@@ -9,6 +15,8 @@ class Settings(BaseSettings):
     db_addr: str
     db_user: str
     db_pass: str
+    nats__url: str
+    nats__num_of_summarizer_consumer_instances: int = 3
 
     model_config = SettingsConfigDict(env_file=".env", extra="allow")
 
