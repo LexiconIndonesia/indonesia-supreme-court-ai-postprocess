@@ -121,8 +121,6 @@ async def generate_court_decision_summary_and_translation(
             current_summary = result.improved_summary
             combined_content = ""
 
-            break
-
     # Translation
     final_summary = current_summary
     translation = await generate_translation(content=final_summary)
