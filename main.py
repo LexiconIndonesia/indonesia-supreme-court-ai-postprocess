@@ -1,6 +1,7 @@
 import asyncio
 import json
 import logging
+import sys
 from collections.abc import AsyncGenerator
 from contextlib import asynccontextmanager
 from http import HTTPStatus
@@ -85,6 +86,7 @@ async def generate_summary(msg: Msg) -> None:
     summary_text = sanitize_markdown_symbol(summary)
     translated_summary_text = sanitize_markdown_symbol(translated_summary)
 
+    print(f"updating db summary data decision number: {decision_number}")
     await write_summary_to_db(
         case_db_engine=contexts.case_db_engine,
         decision_number=decision_number,
@@ -93,6 +95,7 @@ async def generate_summary(msg: Msg) -> None:
         translated_summary=translated_summary,
         translated_summary_text=translated_summary_text,
     )
+    sys.stdout.flush()
 
 
 @app.post(
