@@ -71,7 +71,6 @@ app = FastAPI(lifespan=lifespan)
 
 async def generate_summary(msg: Msg) -> None:
     global CONTEXTS
-    await msg.ack()
     contexts = await CONTEXTS.get_app_contexts(init_nats=True)
 
     data = json.loads(msg.data.decode())
@@ -82,6 +81,8 @@ async def generate_summary(msg: Msg) -> None:
         crawler_db_engine=contexts.crawler_db_engine,
         case_db_engine=contexts.case_db_engine,
     )
+
+    await msg.ack()
 
     summary_text = sanitize_markdown_symbol(summary)
     translated_summary_text = sanitize_markdown_symbol(translated_summary)

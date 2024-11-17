@@ -97,7 +97,7 @@ class CourtDecisionSummary(BaseModel):
 
 
 async def generate_court_decision_summary_and_translation(
-    doc_content: dict[int, str], max_page=int
+    decision_number: str, doc_content: dict[int, str], max_page=int
 ) -> tuple[str, str]:
     current_summary = "No summary information yet"
     previous_page_context = "No previous page context yet"
@@ -106,7 +106,7 @@ async def generate_court_decision_summary_and_translation(
 
     # Incremental summarization
     for page_number, content in tqdm(
-        doc_content.items(), desc="Iterating pages for summary"
+        doc_content.items(), desc=f"Iterating pages for {decision_number} summary"
     ):
         combined_content += content + "\n"
 

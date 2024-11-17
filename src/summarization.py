@@ -17,7 +17,9 @@ async def extract_and_reformat_summary(
 
     doc_content, max_page = await read_pdf_from_uri(crawler_meta.artifact_link)
     summary, translated_summary = await generate_court_decision_summary_and_translation(
-        doc_content=doc_content, max_page=max_page
+        decision_number=case_meta.decision_number,
+        doc_content=doc_content,
+        max_page=max_page,
     )
     return summary, translated_summary, case_meta.decision_number
 

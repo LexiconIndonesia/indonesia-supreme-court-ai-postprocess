@@ -23,6 +23,8 @@ CONSUMER_CONFIG = ConsumerConfig(
     filter_subject=STREAM_SUBJECTS,
     durable_name=DURABLE_NAME,
     ack_wait=DEFAULT_WAIT_TIME_PER_PROCESS,
+    max_deliver=2,
+    max_ack_pending=3,
 )
 STREAM_CONFIG = StreamConfig(name=STREAM_NAME, subjects=[STREAM_SUBJECTS])
 
@@ -229,8 +231,7 @@ async def create_pull_job_consumer(
             A JobConsumer representing the pull subscription.
     """
     job_consumer = await jetstream_client.pull_subscribe(
-        subject=consumer_config.filter_subject,
-        durable=consumer_config.durable_name,
+        config=consumer_config,
         pending_msgs_limit=PENDING_MSG_LIMIT,
     )
     print(f"Running {consumer_config.filter_subject} job subscriber..")
