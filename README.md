@@ -48,6 +48,6 @@ sequenceDiagram
     ai-)service: generated summary
     service-)ai: prompt to generate translation
     ai-)service: generated translation
-    service-)db: store summary in DB
+    service-)db: store summary in DB<br>`summary`,`summary_en`,<br>`summary_formatted`,`summary_formatted_en`
     service--)nats: acknowledged job done
 ```
