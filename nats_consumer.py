@@ -233,7 +233,7 @@ async def create_pull_job_consumer(
         durable=consumer_config.durable_name,
         pending_msgs_limit=PENDING_MSG_LIMIT,
     )
-    logging.info(f"Running {consumer_config.filter_subject} job subscriber..")
+    print(f"Running {consumer_config.filter_subject} job subscriber..")
 
     return job_consumer
 

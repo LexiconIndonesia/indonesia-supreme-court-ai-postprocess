@@ -1,4 +1,9 @@
 import dspy
+from tenacity import (
+    retry,
+    stop_after_attempt,
+    wait_exponential,
+)
 from tqdm import tqdm
 
 
@@ -46,6 +51,11 @@ class CourtDecisionSummarize(dspy.Module):
     def __init__(self):
         self.summarize = dspy.ChainOfThought(CourtDecisionSummarizeSignature)
 
+    @retry(
+        wait=wait_exponential(multiplier=1, min=2, max=10),
+        stop=stop_after_attempt(5),
+        reraise=True,
+    )
     def forward(
         self,
         current_summary: str,
@@ -77,6 +87,11 @@ class EnglishTranslator(dspy.Module):
     def __init__(self):
         self.translate = dspy.Predict(EnglishTranslatorSignature)
 
+    @retry(
+        wait=wait_exponential(multiplier=1, min=2, max=10),
+        stop=stop_after_attempt(5),
+        reraise=True,
+    )
     def forward(
         self,
         summary: str,
@@ -116,6 +131,7 @@ def generate_court_decision_summary(
             combined_content = ""
 
     final_summary = generated_summary.improved_summary
+
     # Translation
     translator = EnglishTranslator()
     translation = translator.forward(

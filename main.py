@@ -27,8 +27,8 @@ from nats_consumer import (
     create_job_consumer_async_task,
 )
 from settings import get_settings
-from src.module import generate_court_decision_summary
-from src.utils import get_extraction_db_data, read_pdf_from_uri
+from src.io import write_summary_to_db
+from src.summarization import extract_and_reformat_summary
 
 
 class SummarizationRequest(BaseModel):
@@ -70,33 +70,34 @@ app = FastAPI(lifespan=lifespan)
 
 async def generate_summary(msg: Msg) -> None:
     global CONTEXTS
-    contexts = await CONTEXTS.get_app_contexts()
+    await msg.ack()
+    contexts = await CONTEXTS.get_app_contexts(init_nats=True)
 
     data = json.loads(msg.data.decode())
     print(f"processing summarization: {data}")
 
-    extraction_data = get_extraction_db_data(
-        extraction_id=data["extraction_id"], db_engine=contexts.db_engine
-    )
-    print(f"downloading data: {extraction_data.artifact_link}")
-    doc_content, max_page = read_pdf_from_uri(extraction_data.artifact_link)
-    summary, translated_summary = generate_court_decision_summary(
-        doc_content=doc_content, max_page=max_page
+    summary, translated_summary, decision_number = extract_and_reformat_summary(
+        extraction_id=data["extraction_id"],
+        crawler_db_engine=contexts.crawler_db_engine,
+        case_db_engine=contexts.case_db_engine,
     )
 
-    # TODO add english translation and save to db, optional provide HTML conversion
-
-    print(summary, translated_summary)
-    await msg.ack()
+    write_summary_to_db(
+        case_db_engine=contexts.case_db_engine,
+        decision_number=decision_number,
+        summary=summary,
+        translated_summary=translated_summary,
+    )
 
 
 @app.post(
-    "/chat/webhook",
-    summary="Route for basecamp chatbot webhook",
+    "/court-decision/summarize",
+    summary="Route for submitting summarization job",
 )
 @retry(
     wait=wait_exponential(multiplier=1, min=2, max=10),
     stop=stop_after_attempt(5),
+    reraise=True,
 )
 async def submit_summarization_job(
     payload: SummarizationRequest,
