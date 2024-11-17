@@ -16,7 +16,7 @@ class Settings(BaseSettings):
     db_user: str
     db_pass: str
     nats__url: str
-    nats__num_of_summarizer_consumer_instances: int = 1
+    nats__num_of_summarizer_consumer_instances: int = 3
     async_http_request_timeout: int = 300
 
     model_config = SettingsConfigDict(env_file=".env", extra="allow")

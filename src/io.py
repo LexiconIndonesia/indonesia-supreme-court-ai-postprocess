@@ -3,7 +3,9 @@ import tempfile
 import aiofiles
 from httpx import AsyncClient
 from sqlalchemy.engine.base import Engine
-from sqlmodel import Column, Field, Session, SQLModel, String, select
+from sqlalchemy.orm import sessionmaker
+from sqlmodel import Column, Field, SQLModel, String, select
+from sqlmodel.ext.asyncio.session import AsyncSession
 from tenacity import (
     retry,
     retry_if_not_exception_type,
@@ -40,14 +42,18 @@ class Cases(SQLModel, table=True):
     reraise=True,
     retry=retry_if_not_exception_type((ValueError, NotImplementedError)),
 )
-def get_extraction_db_data_and_validate(
+async def get_extraction_db_data_and_validate(
     extraction_id: str, crawler_db_engine: Engine, case_db_engine: Engine
 ) -> tuple[Extraction, Cases]:
-    with Session(crawler_db_engine) as session:
-        crawler_meta = session.get(Extraction, extraction_id)
-
-    if not crawler_meta:
+    async_crawler_db_session = sessionmaker(bind=crawler_db_engine, class_=AsyncSession)
+    async with async_crawler_db_session() as session:
+        result_iterator = await session.execute(
+            select(Extraction).where(Extraction.id == extraction_id)
+        )
+    crawler_query_result = [result_ for result_ in result_iterator]
+    if not crawler_query_result:
         raise ValueError(f"extraction id {extraction_id} not found")
+    crawler_meta: Extraction = crawler_query_result[0][0]
 
     if not crawler_meta.raw_page_link.startswith(
         "https://putusan3.mahkamahagung.go.id"
@@ -61,21 +67,20 @@ def get_extraction_db_data_and_validate(
             f"{crawler_meta.metadata_}"
         )
 
-    with Session(case_db_engine) as session:
-        case_meta = [
-            result
-            for result in session.exec(
-                select(Cases).where(Cases.decision_number == decision_number)
-            )
-        ]
+    async_case_db_session = sessionmaker(bind=case_db_engine, class_=AsyncSession)
+    async with async_case_db_session() as session:
+        result_iterator = await session.execute(
+            select(Cases).where(Cases.decision_number == decision_number)
+        )
 
+    case_meta = [result for result in result_iterator]
     if not case_meta:
         raise ValueError(
             "case number identifier not found in `cases` table : "
             f"{crawler_meta.metadata_}"
         )
 
-    return crawler_meta, case_meta[0]
+    return crawler_meta, case_meta[0][0]
 
 
 @retry(
@@ -112,7 +117,7 @@ async def read_pdf_from_uri(uri_path: str) -> tuple[dict[int, str], int]:
     return contents, max_page
 
 
-def write_summary_to_db(
+async def write_summary_to_db(
     case_db_engine: Engine,
     decision_number: str,
     summary: str,
@@ -120,17 +125,19 @@ def write_summary_to_db(
     translated_summary: str,
     translated_summary_text: str,
 ):
-    with Session(case_db_engine) as session:
-        statement = select(Cases).where(Cases.decision_number == decision_number)
-        results = session.exec(statement)
-        case = results.one()
+    async_case_db_session = sessionmaker(bind=case_db_engine, class_=AsyncSession)
+    async with async_case_db_session() as session:
+        result_iterator = await session.execute(
+            select(Cases).where(Cases.decision_number == decision_number)
+        )
+        case = result_iterator.one()[0]
 
         case.summary = summary_text
         case.summary_en = translated_summary_text
         case.summary_formatted = summary
         case.summary_formatted_en = translated_summary
         session.add(case)
-        session.commit()
-        session.refresh(case)
+        await session.commit()
+        await session.refresh(case)
 
     print(f"updated summary decision number {decision_number}")

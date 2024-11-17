@@ -9,7 +9,7 @@ from src.module import generate_court_decision_summary_and_translation
 async def extract_and_reformat_summary(
     extraction_id: str, crawler_db_engine: Engine, case_db_engine: Engine
 ) -> tuple[str, str]:
-    crawler_meta, case_meta = get_extraction_db_data_and_validate(
+    crawler_meta, case_meta = await get_extraction_db_data_and_validate(
         extraction_id=extraction_id,
         crawler_db_engine=crawler_db_engine,
         case_db_engine=case_db_engine,

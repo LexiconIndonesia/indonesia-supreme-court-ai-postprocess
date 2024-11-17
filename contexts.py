@@ -1,4 +1,4 @@
-from sqlmodel import create_engine
+from sqlalchemy.ext.asyncio import create_async_engine
 
 from nats_consumer import (
     generate_nats_stream_configs,
@@ -12,11 +12,14 @@ class AppContexts:
     def __init__(self):
         self.nats_client = None
         self.jetstream_client = None
-        self.crawler_db_engine = create_engine(
-            f"postgresql://{get_settings().db_user}:{get_settings().db_pass}@{get_settings().db_addr}/lexicon_bo_crawler"
+        self.crawler_db_engine = create_async_engine(
+            f"postgresql+asyncpg://{get_settings().db_user}:{get_settings().db_pass}@{get_settings().db_addr}/lexicon_bo_crawler",
+            future=True,
         )
-        self.case_db_engine = create_engine(
-            f"postgresql://{get_settings().db_user}:{get_settings().db_pass}@{get_settings().db_addr}/lexicon_bo"
+
+        self.case_db_engine = create_async_engine(
+            f"postgresql+asyncpg://{get_settings().db_user}:{get_settings().db_pass}@{get_settings().db_addr}/lexicon_bo",
+            future=True,
         )
 
     async def get_app_contexts(self, init_nats: bool = True) -> "AppContexts":

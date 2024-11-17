@@ -1,4 +1,6 @@
 import asyncio
+import logging
+from functools import wraps
 
 import typer
 
@@ -6,27 +8,36 @@ from contexts import AppContexts
 from src.io import write_summary_to_db
 from src.summarization import extract_and_reformat_summary, sanitize_markdown_symbol
 
+logging.getLogger("sqlalchemy.engine").setLevel(logging.WARNING)
+
 app = typer.Typer()
 
 CONTEXTS = AppContexts()
 
 
-@app.command()
-def cli(extraction_id: str):
-    contexts = asyncio.run(CONTEXTS.get_app_contexts(init_nats=False))
+def coro(f):
+    @wraps(f)
+    def wrapper(*args, **kwargs):
+        return asyncio.run(f(*args, **kwargs))
 
-    summary, translated_summary, decision_number = asyncio.run(
-        extract_and_reformat_summary(
-            extraction_id=extraction_id,
-            crawler_db_engine=contexts.crawler_db_engine,
-            case_db_engine=contexts.case_db_engine,
-        )
+    return wrapper
+
+
+@app.command()
+@coro
+async def summarization_cli(extraction_id: str):
+    contexts = await CONTEXTS.get_app_contexts(init_nats=False)
+
+    summary, translated_summary, decision_number = await extract_and_reformat_summary(
+        extraction_id=extraction_id,
+        crawler_db_engine=contexts.crawler_db_engine,
+        case_db_engine=contexts.case_db_engine,
     )
 
     summary_text = sanitize_markdown_symbol(summary)
     translated_summary_text = sanitize_markdown_symbol(translated_summary)
 
-    write_summary_to_db(
+    await write_summary_to_db(
         case_db_engine=contexts.case_db_engine,
         decision_number=decision_number,
         summary=summary,
