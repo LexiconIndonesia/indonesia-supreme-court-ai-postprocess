@@ -76,24 +76,31 @@ async def generate_summary(msg: Msg) -> None:
     data = json.loads(msg.data.decode())
     print(f"processing summarization: {data}")
 
-    summary, translated_summary, decision_number = await extract_and_reformat_summary(
-        extraction_id=data["extraction_id"],
-        crawler_db_engine=contexts.crawler_db_engine,
-        case_db_engine=contexts.case_db_engine,
-    )
+    try:
+        (
+            summary,
+            translated_summary,
+            decision_number,
+        ) = await extract_and_reformat_summary(
+            extraction_id=data["extraction_id"],
+            crawler_db_engine=contexts.crawler_db_engine,
+            case_db_engine=contexts.case_db_engine,
+        )
 
-    summary_text = sanitize_markdown_symbol(summary)
-    translated_summary_text = sanitize_markdown_symbol(translated_summary)
+        summary_text = sanitize_markdown_symbol(summary)
+        translated_summary_text = sanitize_markdown_symbol(translated_summary)
 
-    print(f"updating db summary data decision number: {decision_number}")
-    await write_summary_to_db(
-        case_db_engine=contexts.case_db_engine,
-        decision_number=decision_number,
-        summary=summary,
-        summary_text=summary_text,
-        translated_summary=translated_summary,
-        translated_summary_text=translated_summary_text,
-    )
+        print(f"updating db summary data decision number: {decision_number}")
+        await write_summary_to_db(
+            case_db_engine=contexts.case_db_engine,
+            decision_number=decision_number,
+            summary=summary,
+            summary_text=summary_text,
+            translated_summary=translated_summary,
+            translated_summary_text=translated_summary_text,
+        )
+    except Exception as e:
+        logging.error(f"failed to process summarization {data}: error - {e}")
 
     sys.stdout.flush()
     await msg.ack()

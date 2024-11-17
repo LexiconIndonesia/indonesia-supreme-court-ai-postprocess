@@ -1,3 +1,4 @@
+import asyncio
 import tempfile
 
 import aiofiles
@@ -111,6 +112,8 @@ async def read_pdf_from_uri(uri_path: str) -> tuple[dict[int, str], int]:
         current_content = contents.get(current_page, "")
         current_content += "\n" + str(el)
         contents[current_page] = current_content
+
+        await asyncio.sleep(0.01)
 
     max_page = current_page
 
