@@ -1,5 +1,6 @@
 import asyncio
 import logging
+import sys
 from collections.abc import Callable
 
 import nats
@@ -231,10 +232,13 @@ async def create_pull_job_consumer(
             A JobConsumer representing the pull subscription.
     """
     job_consumer = await jetstream_client.pull_subscribe(
+        subject=consumer_config.filter_subject,
+        durable=consumer_config.durable_name,
         config=consumer_config,
         pending_msgs_limit=PENDING_MSG_LIMIT,
     )
     print(f"Running {consumer_config.filter_subject} job subscriber..")
+    sys.stdout.flush()
 
     return job_consumer
 

@@ -82,8 +82,6 @@ async def generate_summary(msg: Msg) -> None:
         case_db_engine=contexts.case_db_engine,
     )
 
-    await msg.ack()
-
     summary_text = sanitize_markdown_symbol(summary)
     translated_summary_text = sanitize_markdown_symbol(translated_summary)
 
@@ -96,7 +94,9 @@ async def generate_summary(msg: Msg) -> None:
         translated_summary=translated_summary,
         translated_summary_text=translated_summary_text,
     )
+
     sys.stdout.flush()
+    await msg.ack()
 
 
 @app.post(
