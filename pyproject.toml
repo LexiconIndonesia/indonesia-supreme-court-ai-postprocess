@@ -5,13 +5,16 @@ description = "Backend services to enable postprocessing features related to Ind
 readme = "README.md"
 requires-python = ">=3.10"
 dependencies = [
-    "dspy>=2.5.29",
+    "aiofiles>=24.1.0",
     "fastapi[standard]>=0.115.0",
+    "litellm>=1.52.9",
+    "markdown>=3.7",
     "nats-py>=2.9.0",
     "openai>=1.39.0",
     "psycopg2-binary>=2.9.10",
     "pydantic-settings>=2.5.2",
     "sqlmodel>=0.0.22",
+    "tenacity>=9.0.0",
     "torch>=2.5.1",
     "typer>=0.12.5",
     "unstructured[pdf]>=0.16.5",
